@@ -8,7 +8,6 @@ import {
   DatePicker,
   Button,
   message,
-  Steps,
   Space,
 } from 'antd';
 import {
@@ -32,16 +31,14 @@ export default function CreatePlan() {
   const { user, addPlan } = useStore();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const [currentStep, setCurrentStep] = useState(0);
   const [showVoiceInput, setShowVoiceInput] = useState(false);
 
   const handleVoiceResult = (transcript: string) => {
-    // 解析语音输入，填充表单
-    // 示例："我想去日本，5天，预算1万元，喜欢美食和动漫，带孩子"
+    // 将语音识别结果填充到偏好字段
     form.setFieldsValue({
       preferences: transcript,
     });
-    message.success('语音识别成功！');
+    message.success('语音识别完成！');
     setShowVoiceInput(false);
   };
 
@@ -109,12 +106,6 @@ export default function CreatePlan() {
 
       <Content style={{ padding: 24 }}>
         <Card style={{ maxWidth: 800, margin: '0 auto' }}>
-          <Steps current={currentStep} style={{ marginBottom: 32 }}>
-            <Steps.Step title="基本信息" />
-            <Steps.Step title="偏好设置" />
-            <Steps.Step title="生成计划" />
-          </Steps>
-
           <Form
             form={form}
             layout="vertical"

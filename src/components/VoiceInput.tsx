@@ -13,7 +13,8 @@ interface VoiceInputProps {
 
 export default function VoiceInput({ onResult, onClose }: VoiceInputProps) {
   const [isListening, setIsListening] = useState(false);
-  const [transcript, setTranscript] = useState('');
+  const [interimTranscript, setInterimTranscript] = useState(''); // 临时识别文本
+  const [finalTranscript, setFinalTranscript] = useState(''); // 最终识别文本
   const [error, setError] = useState('');
   const [recognition, setRecognition] = useState<ReturnType<typeof createSpeechRecognition> | null>(null);
 
@@ -38,19 +39,25 @@ export default function VoiceInput({ onResult, onClose }: VoiceInputProps) {
       return;
     }
 
-    setTranscript('');
+    setInterimTranscript('');
+    setFinalTranscript('');
     setError('');
     setIsListening(true);
 
     recognition.start(
+      // 最终结果回调
       (result: SpeechRecognitionResult) => {
-        setTranscript(result.transcript);
-        setIsListening(false);
-        onResult(result.transcript);
+        setFinalTranscript(prev => prev + result.transcript);
+        setInterimTranscript(''); // 清空临时文本
       },
+      // 错误回调
       (err: string) => {
         setError(err);
         setIsListening(false);
+      },
+      // 实时结果回调（新增）
+      (interim: string) => {
+        setInterimTranscript(interim);
       }
     );
   };
@@ -59,6 +66,11 @@ export default function VoiceInput({ onResult, onClose }: VoiceInputProps) {
     if (recognition) {
       recognition.stop();
       setIsListening(false);
+
+      // 将最终结果传递给父组件
+      if (finalTranscript) {
+        onResult(finalTranscript);
+      }
     }
   };
 
@@ -124,25 +136,44 @@ export default function VoiceInput({ onResult, onClose }: VoiceInputProps) {
               )}
             </div>
 
-            {transcript && (
+            {/* 实时显示识别文本 */}
+            {(finalTranscript || interimTranscript) && (
               <div
                 style={{
                   background: '#f0f2f5',
                   padding: 16,
                   borderRadius: 8,
                   textAlign: 'left',
+                  minHeight: 80,
+                  maxHeight: 200,
+                  overflowY: 'auto',
                 }}
               >
-                <Text strong>识别结果：</Text>
-                <div style={{ marginTop: 8 }}>
-                  <Text>{transcript}</Text>
+                <Text strong style={{ display: 'block', marginBottom: 8 }}>
+                  识别结果：
+                </Text>
+                <div>
+                  {/* 已确认的文本（黑色） */}
+                  {finalTranscript && (
+                    <Text style={{ fontSize: 16 }}>{finalTranscript}</Text>
+                  )}
+                  {/* 临时文本（灰色斜体） */}
+                  {interimTranscript && (
+                    <Text
+                      type="secondary"
+                      italic
+                      style={{ fontSize: 16, marginLeft: finalTranscript ? 4 : 0 }}
+                    >
+                      {interimTranscript}
+                    </Text>
+                  )}
                 </div>
               </div>
             )}
 
             {isListening && (
-              <Button onClick={stopListening} danger>
-                停止录音
+              <Button onClick={stopListening} danger size="large">
+                完成录音
               </Button>
             )}
           </Space>

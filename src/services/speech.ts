@@ -49,14 +49,15 @@ export class SpeechRecognitionService {
 
     this.recognition = new SpeechRecognition();
     this.recognition.lang = 'zh-CN';
-    this.recognition.continuous = false;
-    this.recognition.interimResults = false;
+    this.recognition.continuous = true; // 启用连续识别
+    this.recognition.interimResults = true; // 启用实时结果
     this.recognition.maxAlternatives = 1;
   }
 
   start(
     onResult: (result: SpeechRecognitionResult) => void,
-    onError?: (error: string) => void
+    onError?: (error: string) => void,
+    onInterimResult?: (transcript: string) => void
   ): void {
     if (this.isListening) {
       console.warn('Already listening');
@@ -68,13 +69,35 @@ export class SpeechRecognitionService {
     };
 
     this.recognition.onresult = (event: SpeechRecognitionEvent) => {
-      const result = event.results[event.resultIndex];
-      const alternative = result[0];
+      let interimTranscript = '';
+      let finalTranscript = '';
 
-      onResult({
-        transcript: alternative.transcript,
-        confidence: alternative.confidence,
-      });
+      // 遍历所有识别结果
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const result = event.results[i];
+        const alternative = result[0];
+
+        if (result.isFinal) {
+          // 最终结果
+          finalTranscript += alternative.transcript;
+        } else {
+          // 临时结果
+          interimTranscript += alternative.transcript;
+        }
+      }
+
+      // 如果有临时结果，通过回调传递
+      if (interimTranscript && onInterimResult) {
+        onInterimResult(interimTranscript);
+      }
+
+      // 如果有最终结果，通过主回调传递
+      if (finalTranscript) {
+        onResult({
+          transcript: finalTranscript,
+          confidence: event.results[event.resultIndex][0].confidence,
+        });
+      }
     };
 
     this.recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
