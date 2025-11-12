@@ -63,6 +63,96 @@ export class LLMService {
     }
   }
 
+  // 流式生成旅行计划（支持实时显示）
+  async generateTravelPlanStream(
+    params: GeneratePlanParams,
+    onChunk: (text: string) => void,
+    onComplete: (result: LLMResponse) => void,
+    onError: (error: string) => void
+  ): Promise<void> {
+    const prompt = this.buildPrompt(params);
+
+    try {
+      const response = await fetch(`${this.baseURL}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${this.apiKey}`,
+        },
+        body: JSON.stringify({
+          model: this.model,
+          messages: [
+            {
+              role: 'system',
+              content: '你是一个专业的旅行规划助手，擅长根据用户需求制定详细的旅行计划。你的回复必须是有效的JSON格式。',
+            },
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ],
+          temperature: 0.7,
+          stream: true, // 启用流式输出
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error('无法获取响应流');
+      }
+
+      const decoder = new TextDecoder();
+      let fullText = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n').filter(line => line.trim() !== '');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+
+            if (data === '[DONE]') {
+              // 流式输出完成，解析完整的JSON
+              try {
+                const parsed = JSON.parse(fullText);
+                onComplete(parsed);
+              } catch (parseError) {
+                console.error('JSON解析失败:', fullText);
+                onError('生成的内容格式错误');
+              }
+              return;
+            }
+
+            try {
+              const parsed = JSON.parse(data);
+              const content = parsed.choices?.[0]?.delta?.content || '';
+
+              if (content) {
+                fullText += content;
+                onChunk(content); // 实时回调每个chunk
+              }
+            } catch (e) {
+              // 忽略无法解析的行
+              console.warn('无法解析的数据行:', data);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Stream LLM API Error:', error);
+      onError('生成旅行计划失败，请检查API配置');
+    }
+  }
+
   async analyzeBudget(plan: TravelPlan): Promise<{
     breakdown: Record<string, number>;
     suggestions: string[];

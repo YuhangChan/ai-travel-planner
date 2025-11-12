@@ -20,6 +20,7 @@ import { useStore } from '@/store';
 import { llmService } from '@/services/llm';
 import { planService } from '@/services/plan';
 import VoiceInput from '@/components/VoiceInput';
+import StreamingDisplay from '@/components/StreamingDisplay';
 import dayjs, { Dayjs } from 'dayjs';
 
 const { Header, Content } = Layout;
@@ -32,6 +33,9 @@ export default function CreatePlan() {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [showVoiceInput, setShowVoiceInput] = useState(false);
+  const [streamingContent, setStreamingContent] = useState('');
+  const [showStreaming, setShowStreaming] = useState(false);
+  const [streamComplete, setStreamComplete] = useState(false);
 
   const handleVoiceResult = (transcript: string) => {
     // 将语音识别结果填充到偏好字段
@@ -49,37 +53,61 @@ export default function CreatePlan() {
     }
 
     setLoading(true);
+    setStreamingContent('');
+    setShowStreaming(true);
+    setStreamComplete(false);
+
     try {
-      // 调用 LLM 生成行程
-      const result = await llmService.generateTravelPlan({
-        destination: values.destination,
-        startDate: values.dateRange[0].format('YYYY-MM-DD'),
-        endDate: values.dateRange[1].format('YYYY-MM-DD'),
-        budget: values.budget,
-        peopleCount: values.peopleCount,
-        preferences: values.preferences || '',
-      });
+      // 使用流式API生成行程
+      await llmService.generateTravelPlanStream(
+        {
+          destination: values.destination,
+          startDate: values.dateRange[0].format('YYYY-MM-DD'),
+          endDate: values.dateRange[1].format('YYYY-MM-DD'),
+          budget: values.budget,
+          peopleCount: values.peopleCount,
+          preferences: values.preferences || '',
+        },
+        // onChunk: 实时显示每个文本块
+        (chunk: string) => {
+          setStreamingContent((prev) => prev + chunk);
+        },
+        // onComplete: 流式输出完成
+        async (result) => {
+          setStreamComplete(true);
 
-      // 保存到数据库
-      const plan = await planService.createPlan({
-        user_id: user.id,
-        title: `${values.destination}之旅`,
-        destination: values.destination,
-        start_date: values.dateRange[0].format('YYYY-MM-DD'),
-        end_date: values.dateRange[1].format('YYYY-MM-DD'),
-        budget: values.budget,
-        people_count: values.peopleCount,
-        preferences: values.preferences || '',
-        itinerary: result.itinerary,
-      });
+          // 等待1秒让用户看到完成状态
+          await new Promise(resolve => setTimeout(resolve, 1000));
 
-      addPlan(plan);
-      message.success('旅行计划生成成功！');
-      navigate(`/plan/${plan.id}`);
+          // 保存到数据库
+          const plan = await planService.createPlan({
+            user_id: user.id,
+            title: `${values.destination}之旅`,
+            destination: values.destination,
+            start_date: values.dateRange[0].format('YYYY-MM-DD'),
+            end_date: values.dateRange[1].format('YYYY-MM-DD'),
+            budget: values.budget,
+            people_count: values.peopleCount,
+            preferences: values.preferences || '',
+            itinerary: result.itinerary,
+          });
+
+          addPlan(plan);
+          setShowStreaming(false);
+          message.success('旅行计划生成成功！');
+          navigate(`/plan/${plan.id}`);
+        },
+        // onError: 错误处理
+        (error: string) => {
+          setShowStreaming(false);
+          setLoading(false);
+          message.error(error);
+        }
+      );
     } catch (error: any) {
-      message.error(error.message || '生成旅行计划失败');
-    } finally {
+      setShowStreaming(false);
       setLoading(false);
+      message.error(error.message || '生成旅行计划失败');
     }
   };
 
@@ -204,6 +232,13 @@ export default function CreatePlan() {
             onClose={() => setShowVoiceInput(false)}
           />
         )}
+
+        {/* 流式输出显示 */}
+        <StreamingDisplay
+          visible={showStreaming}
+          content={streamingContent}
+          isComplete={streamComplete}
+        />
       </Content>
     </Layout>
   );
