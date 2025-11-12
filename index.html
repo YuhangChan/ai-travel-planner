@@ -5,10 +5,23 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AI Travel Planner - 智能旅行规划师</title>
-    <!-- 高德地图配置将在运行时通过 main.tsx 注入 -->
   </head>
   <body>
     <div id="root"></div>
+
+    <!-- 高德地图安全密钥配置 -->
+    <script>
+      window._AMapSecurityConfig = {
+        securityJsCode: '%VITE_AMAP_SECURITY_CODE%',
+      };
+    </script>
+
+    <!-- 高德地图 JS API 2.0 -->
+    <script
+      type="text/javascript"
+      src="https://webapi.amap.com/maps?v=2.0&key=%VITE_AMAP_API_KEY%&plugin=AMap.ToolBar,AMap.Driving,AMap.Walking,AMap.Transfer,AMap.PlaceSearch,AMap.AutoComplete,AMap.Geocoder"
+    ></script>
+
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
