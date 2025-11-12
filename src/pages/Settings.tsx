@@ -207,6 +207,23 @@ export default function Settings() {
                 )}
               </Space>
             </Descriptions.Item>
+
+            <Descriptions.Item
+              label={
+                <span>
+                  {getStatusIcon('VITE_AMAP_SECURITY_CODE')} 高德地图安全密钥
+                </span>
+              }
+            >
+              <Space>
+                {getStatusTag('VITE_AMAP_SECURITY_CODE')}
+                {config.amap.securityCode && (
+                  <Text type="secondary">
+                    {config.amap.securityCode.substring(0, 8)}...
+                  </Text>
+                )}
+              </Space>
+            </Descriptions.Item>
           </Descriptions>
 
           <Card
@@ -237,7 +254,8 @@ VITE_LLM_API_KEY=sk-your-api-key
 VITE_LLM_MODEL=gpt-4
 VITE_SUPABASE_URL=https://xxxxx.supabase.co
 VITE_SUPABASE_ANON_KEY=eyJ...
-VITE_AMAP_API_KEY=your-amap-key`}
+VITE_AMAP_API_KEY=your-amap-key
+VITE_AMAP_SECURITY_CODE=your-amap-security-code`}
                 </pre>
                 <p>3. 重启开发服务器使配置生效</p>
               </div>
@@ -282,7 +300,7 @@ VITE_AMAP_API_KEY=your-amap-key`}
                     >
                       https://console.amap.com
                     </a>{' '}
-                    → 应用管理 → 我的应用
+                    → 应用管理 → 我的应用 → 获取 Key 和安全密钥（securityJsCode）
                   </li>
                 </ul>
               </div>

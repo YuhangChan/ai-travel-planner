@@ -148,12 +148,13 @@ VITE_SUPABASE_ANON_KEY=eyJhbGc...
 
 # 高德地图 API Key
 VITE_AMAP_API_KEY=your-amap-key-here
+VITE_AMAP_SECURITY_CODE=your-amap-security-code-here
 ```
 
 3. **如何获取这些 API Keys？**
    - **LLM API (OpenAI)**: 访问 [https://platform.openai.com/api-keys](https://platform.openai.com/api-keys)
    - **Supabase**: 访问 [https://supabase.com](https://supabase.com) → 创建项目 → Project Settings → API
-   - **高德地图**: 访问 [https://console.amap.com](https://console.amap.com) → 应用管理 → 我的应用
+   - **高德地图**: 访问 [https://console.amap.com](https://console.amap.com) → 应用管理 → 我的应用 → 获取 Key 和安全密钥
 
 ### 配置 Supabase 数据库
 
@@ -239,6 +240,7 @@ npm run build
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`
 - `VITE_AMAP_API_KEY`
+- `VITE_AMAP_SECURITY_CODE`
 
 ### 部署到 Vercel
 

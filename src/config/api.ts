@@ -13,6 +13,7 @@ export interface ApiConfig {
   };
   amap: {
     apiKey: string;
+    securityCode: string;
   };
 }
 
@@ -29,6 +30,7 @@ const config: ApiConfig = {
   },
   amap: {
     apiKey: import.meta.env.VITE_AMAP_API_KEY || '',
+    securityCode: import.meta.env.VITE_AMAP_SECURITY_CODE || '',
   },
 };
 
@@ -42,6 +44,7 @@ export const validateConfig = (): { valid: boolean; missing: string[] } => {
   if (!config.supabase.url) missing.push('VITE_SUPABASE_URL');
   if (!config.supabase.anonKey) missing.push('VITE_SUPABASE_ANON_KEY');
   if (!config.amap.apiKey) missing.push('VITE_AMAP_API_KEY');
+  if (!config.amap.securityCode) missing.push('VITE_AMAP_SECURITY_CODE');
 
   return {
     valid: missing.length === 0,

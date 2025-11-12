@@ -1,37 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
-import { Card, Empty, message, Spin } from 'antd';
+import { Card, Empty, Spin } from 'antd';
 import { TravelPlan } from '@/types';
-import config from '@/config/api';
 
 declare global {
   interface Window {
     AMap: any;
-    _AMapSecurityConfig?: any;
   }
 }
 
 interface MapViewProps {
   plan: TravelPlan;
 }
-
-// 动态加载高德地图脚本
-const loadAmapScript = (): Promise<void> => {
-  return new Promise((resolve, reject) => {
-    // 如果已经加载过，直接返回
-    if (window.AMap) {
-      resolve();
-      return;
-    }
-
-    // 创建 script 标签
-    const script = document.createElement('script');
-    script.type = 'text/javascript';
-    script.src = `https://webapi.amap.com/maps?v=2.0&key=${config.amap.apiKey}`;
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error('Failed to load Amap SDK'));
-    document.head.appendChild(script);
-  });
-};
 
 export default function MapView({ plan }: MapViewProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
@@ -42,16 +21,20 @@ export default function MapView({ plan }: MapViewProps) {
   useEffect(() => {
     if (!mapContainer.current) return;
 
-    const initMap = async () => {
+    const initMap = () => {
       try {
-        // 动态加载高德地图
-        await loadAmapScript();
+        // 检查高德地图 API 是否加载
+        if (!window.AMap) {
+          setError('高德地图 API 未加载，请检查配置');
+          setLoading(false);
+          return;
+        }
 
         // 创建地图实例
         const mapInstance = new window.AMap.Map(mapContainer.current, {
           zoom: 12,
           center: [116.397428, 39.90923], // 默认北京
-          mapStyle: 'amap://styles/normal',
+          viewMode: '3D',
         });
 
         setMap(mapInstance);
@@ -68,11 +51,6 @@ export default function MapView({ plan }: MapViewProps) {
                 const marker = new window.AMap.Marker({
                   position: [activity.location.longitude, activity.location.latitude],
                   title: activity.name,
-                  icon: new window.AMap.Icon({
-                    image: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_b.png',
-                    size: new window.AMap.Size(25, 34),
-                    imageSize: new window.AMap.Size(25, 34),
-                  }),
                 });
 
                 // 添加信息窗口
@@ -103,11 +81,6 @@ export default function MapView({ plan }: MapViewProps) {
               const marker = new window.AMap.Marker({
                 position: [hotel.location.longitude, hotel.location.latitude],
                 title: hotel.name,
-                icon: new window.AMap.Icon({
-                  image: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_r.png',
-                  size: new window.AMap.Size(25, 34),
-                  imageSize: new window.AMap.Size(25, 34),
-                }),
               });
 
               const infoWindow = new window.AMap.InfoWindow({
@@ -190,7 +163,7 @@ export default function MapView({ plan }: MapViewProps) {
       />
       <div style={{ padding: '16px', background: '#fafafa' }}>
         <p style={{ margin: 0, color: '#666' }}>
-          🔵 景点标记 | 🔴 住宿标记 | 点击标记查看详细信息
+          📍 点击标记查看详细信息
         </p>
       </div>
     </Card>
