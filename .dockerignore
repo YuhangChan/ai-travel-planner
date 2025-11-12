@@ -1,0 +1,65 @@
+# 依赖目录
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# 构建输出
+dist
+dist-ssr
+*.local
+
+# 环境变量文件
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+
+# 编辑器和 IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# 测试
+coverage
+.nyc_output
+
+# 临时文件
+*.tmp
+*.temp
+*.log
+
+# 文档
+README.md
+README*.md
+CHANGELOG.md
+LICENSE
+docs
+
+# CI/CD
+.github
+.gitlab-ci.yml
+.travis.yml
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# 其他
+.husky
+.eslintcache
+.prettierignore
+prompt.md
+*.txt
+1.log
