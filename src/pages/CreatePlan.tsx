@@ -18,7 +18,7 @@ import {
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '@/store';
-import { createLLMService } from '@/services/llm';
+import { llmService } from '@/services/llm';
 import { planService } from '@/services/plan';
 import VoiceInput from '@/components/VoiceInput';
 import dayjs, { Dayjs } from 'dayjs';
@@ -29,7 +29,7 @@ const { TextArea } = Input;
 
 export default function CreatePlan() {
   const navigate = useNavigate();
-  const { user, apiConfig, addPlan } = useStore();
+  const { user, addPlan } = useStore();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
@@ -51,20 +51,9 @@ export default function CreatePlan() {
       return;
     }
 
-    if (!apiConfig.llm_api_key || !apiConfig.llm_base_url) {
-      message.error('请先在设置页面配置 LLM API');
-      navigate('/settings');
-      return;
-    }
-
     setLoading(true);
     try {
       // 调用 LLM 生成行程
-      const llmService = createLLMService(
-        apiConfig.llm_base_url,
-        apiConfig.llm_api_key
-      );
-
       const result = await llmService.generateTravelPlan({
         destination: values.destination,
         startDate: values.dateRange[0].format('YYYY-MM-DD'),

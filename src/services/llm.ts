@@ -18,10 +18,12 @@ interface LLMResponse {
 export class LLMService {
   private baseURL: string;
   private apiKey: string;
+  private model: string;
 
-  constructor(baseURL: string, apiKey: string) {
+  constructor(baseURL: string, apiKey: string, model: string = 'gpt-4') {
     this.baseURL = baseURL;
     this.apiKey = apiKey;
+    this.model = model;
   }
 
   async generateTravelPlan(params: GeneratePlanParams): Promise<LLMResponse> {
@@ -31,7 +33,7 @@ export class LLMService {
       const response = await axios.post(
         `${this.baseURL}/chat/completions`,
         {
-          model: 'gpt-4',
+          model: this.model,
           messages: [
             {
               role: 'system',
@@ -90,7 +92,7 @@ export class LLMService {
       const response = await axios.post(
         `${this.baseURL}/chat/completions`,
         {
-          model: 'gpt-4',
+          model: this.model,
           messages: [
             {
               role: 'system',
@@ -212,6 +214,15 @@ JSON格式示例：
   }
 }
 
-export const createLLMService = (baseURL: string, apiKey: string) => {
-  return new LLMService(baseURL, apiKey);
+import config from '@/config/api';
+
+// 默认导出配置好的 LLM 服务实例
+export const llmService = new LLMService(
+  config.llm.baseURL,
+  config.llm.apiKey,
+  config.llm.model
+);
+
+export const createLLMService = (baseURL: string, apiKey: string, model: string = 'gpt-4') => {
+  return new LLMService(baseURL, apiKey, model);
 };

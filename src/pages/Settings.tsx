@@ -1,56 +1,54 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Layout,
   Card,
-  Form,
-  Input,
   Button,
-  message,
-  Divider,
   Alert,
+  Descriptions,
+  Tag,
   Space,
+  Typography,
 } from 'antd';
 import {
   ArrowLeftOutlined,
-  SaveOutlined,
-  KeyOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  WarningOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import { useStore } from '@/store';
-import { initSupabase } from '@/services/supabase';
+import config, { validateConfig } from '@/config/api';
 
 const { Header, Content } = Layout;
+const { Paragraph, Text } = Typography;
 
 export default function Settings() {
   const navigate = useNavigate();
-  const { apiConfig, setApiConfig } = useStore();
-  const [form] = Form.useForm();
-  const [supabaseConfigured, setSupabaseConfigured] = useState(false);
+  const [configStatus, setConfigStatus] = useState<{
+    valid: boolean;
+    missing: string[];
+  }>({ valid: true, missing: [] });
 
   useEffect(() => {
-    form.setFieldsValue(apiConfig);
-  }, [apiConfig, form]);
+    const status = validateConfig();
+    setConfigStatus(status);
+  }, []);
 
-  const handleSave = (values: any) => {
-    try {
-      // 保存 API 配置
-      setApiConfig(values);
+  const getStatusIcon = (key: string) => {
+    const isMissing = configStatus.missing.includes(key);
+    return isMissing ? (
+      <CloseCircleOutlined style={{ color: '#ff4d4f' }} />
+    ) : (
+      <CheckCircleOutlined style={{ color: '#52c41a' }} />
+    );
+  };
 
-      // 初始化 Supabase（如果配置了）
-      if (values.supabase_url && values.supabase_anon_key) {
-        try {
-          initSupabase(values.supabase_url, values.supabase_anon_key);
-          setSupabaseConfigured(true);
-          message.success('Supabase 配置成功！');
-        } catch (error) {
-          message.error('Supabase 配置失败，请检查 URL 和 Key 是否正确');
-        }
-      }
-
-      message.success('设置已保存！');
-    } catch (error: any) {
-      message.error('保存失败');
-    }
+  const getStatusTag = (key: string) => {
+    const isMissing = configStatus.missing.includes(key);
+    return isMissing ? (
+      <Tag color="error">未配置</Tag>
+    ) : (
+      <Tag color="success">已配置</Tag>
+    );
   };
 
   return (
@@ -71,157 +69,225 @@ export default function Settings() {
         >
           返回
         </Button>
-        <h1 style={{ margin: 0, fontSize: 24 }}>API 设置</h1>
+        <h1 style={{ margin: 0, fontSize: 24 }}>系统配置</h1>
       </Header>
 
       <Content style={{ padding: 24 }}>
-        <Card style={{ maxWidth: 800, margin: '0 auto' }}>
-          <Alert
-            message="安全提示"
-            description="所有 API Key 仅保存在浏览器本地存储中，不会上传到服务器。请妥善保管您的 API Key。"
-            type="warning"
-            showIcon
-            style={{ marginBottom: 24 }}
-          />
+        <Card style={{ maxWidth: 900, margin: '0 auto' }}>
+          {!configStatus.valid && (
+            <Alert
+              message="配置不完整"
+              description={
+                <div>
+                  <p>以下环境变量未配置，请在 .env.local 文件中添加：</p>
+                  <ul>
+                    {configStatus.missing.map((key) => (
+                      <li key={key}>
+                        <code>{key}</code>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              }
+              type="error"
+              showIcon
+              icon={<WarningOutlined />}
+              style={{ marginBottom: 24 }}
+            />
+          )}
 
-          <Form
-            form={form}
-            layout="vertical"
-            onFinish={handleSave}
-            initialValues={apiConfig}
+          {configStatus.valid && (
+            <Alert
+              message="配置完整"
+              description="所有必需的 API 配置都已正确设置。"
+              type="success"
+              showIcon
+              style={{ marginBottom: 24 }}
+            />
+          )}
+
+          <Descriptions
+            title="API 配置状态"
+            bordered
+            column={1}
+            labelStyle={{ width: 200 }}
           >
-            <Divider orientation="left">
-              <KeyOutlined /> LLM API 配置
-            </Divider>
-
-            <Form.Item
-              label="LLM Base URL"
-              name="llm_base_url"
-              rules={[
-                { required: true, message: '请输入 LLM Base URL' },
-                { type: 'url', message: '请输入有效的 URL' },
-              ]}
-              extra="例如：https://api.openai.com/v1 或您的自定义 API 地址"
+            <Descriptions.Item
+              label={
+                <span>
+                  {getStatusIcon('VITE_LLM_BASE_URL')} LLM Base URL
+                </span>
+              }
             >
-              <Input
-                size="large"
-                placeholder="https://api.openai.com/v1"
-              />
-            </Form.Item>
+              <Space>
+                {getStatusTag('VITE_LLM_BASE_URL')}
+                {config.llm.baseURL && (
+                  <Text type="secondary">{config.llm.baseURL}</Text>
+                )}
+              </Space>
+            </Descriptions.Item>
 
-            <Form.Item
-              label="LLM API Key"
-              name="llm_api_key"
-              rules={[{ required: true, message: '请输入 LLM API Key' }]}
-              extra="您的 OpenAI 或兼容 OpenAI 格式的 API Key"
+            <Descriptions.Item
+              label={
+                <span>
+                  {getStatusIcon('VITE_LLM_API_KEY')} LLM API Key
+                </span>
+              }
             >
-              <Input.Password
-                size="large"
-                placeholder="sk-..."
-              />
-            </Form.Item>
+              <Space>
+                {getStatusTag('VITE_LLM_API_KEY')}
+                {config.llm.apiKey && (
+                  <Text type="secondary">
+                    {config.llm.apiKey.substring(0, 8)}...
+                  </Text>
+                )}
+              </Space>
+            </Descriptions.Item>
 
-            <Divider orientation="left">
-              <KeyOutlined /> Supabase 配置
-            </Divider>
-
-            <Form.Item
-              label="Supabase URL"
-              name="supabase_url"
-              rules={[
-                { required: true, message: '请输入 Supabase URL' },
-                { type: 'url', message: '请输入有效的 URL' },
-              ]}
-              extra="您的 Supabase 项目 URL（例如：https://xxxxx.supabase.co）"
+            <Descriptions.Item
+              label={
+                <span>
+                  {getStatusIcon('VITE_LLM_MODEL')} LLM Model
+                </span>
+              }
             >
-              <Input
-                size="large"
-                placeholder="https://xxxxx.supabase.co"
-              />
-            </Form.Item>
+              <Space>
+                {getStatusTag('VITE_LLM_MODEL')}
+                {config.llm.model && (
+                  <Text type="secondary">{config.llm.model}</Text>
+                )}
+              </Space>
+            </Descriptions.Item>
 
-            <Form.Item
-              label="Supabase Anon Key"
-              name="supabase_anon_key"
-              rules={[{ required: true, message: '请输入 Supabase Anon Key' }]}
-              extra="您的 Supabase 匿名公钥（anon/public key）"
+            <Descriptions.Item
+              label={
+                <span>
+                  {getStatusIcon('VITE_SUPABASE_URL')} Supabase URL
+                </span>
+              }
             >
-              <Input.Password
-                size="large"
-                placeholder="eyJ..."
-              />
-            </Form.Item>
+              <Space>
+                {getStatusTag('VITE_SUPABASE_URL')}
+                {config.supabase.url && (
+                  <Text type="secondary">{config.supabase.url}</Text>
+                )}
+              </Space>
+            </Descriptions.Item>
 
-            <Divider orientation="left">
-              <KeyOutlined /> 高德地图 API
-            </Divider>
-
-            <Form.Item
-              label="高德地图 API Key"
-              name="amap_api_key"
-              rules={[{ required: true, message: '请输入高德地图 API Key' }]}
-              extra="您的高德地图 Web 服务 API Key（在 index.html 中也需要配置）"
+            <Descriptions.Item
+              label={
+                <span>
+                  {getStatusIcon('VITE_SUPABASE_ANON_KEY')} Supabase Anon Key
+                </span>
+              }
             >
-              <Input
-                size="large"
-                placeholder="请输入高德地图 API Key"
-              />
-            </Form.Item>
+              <Space>
+                {getStatusTag('VITE_SUPABASE_ANON_KEY')}
+                {config.supabase.anonKey && (
+                  <Text type="secondary">
+                    {config.supabase.anonKey.substring(0, 12)}...
+                  </Text>
+                )}
+              </Space>
+            </Descriptions.Item>
 
-            <Form.Item style={{ marginTop: 32 }}>
-              <Button
-                type="primary"
-                htmlType="submit"
-                size="large"
-                block
-                icon={<SaveOutlined />}
-              >
-                保存设置
-              </Button>
-            </Form.Item>
-          </Form>
+            <Descriptions.Item
+              label={
+                <span>
+                  {getStatusIcon('VITE_AMAP_API_KEY')} 高德地图 API Key
+                </span>
+              }
+            >
+              <Space>
+                {getStatusTag('VITE_AMAP_API_KEY')}
+                {config.amap.apiKey && (
+                  <Text type="secondary">
+                    {config.amap.apiKey.substring(0, 8)}...
+                  </Text>
+                )}
+              </Space>
+            </Descriptions.Item>
+          </Descriptions>
 
-          <Divider />
-
-          <div style={{ marginTop: 24 }}>
-            <h3>如何获取 API Keys：</h3>
+          <Card
+            title="📝 配置说明"
+            style={{ marginTop: 24 }}
+            type="inner"
+          >
             <Space direction="vertical" style={{ width: '100%' }}>
-              <Card size="small">
-                <h4>1. LLM API（OpenAI 或兼容服务）</h4>
-                <p>
-                  - OpenAI 官方：访问{' '}
-                  <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer">
-                    https://platform.openai.com/api-keys
-                  </a>
-                </p>
-                <p>- 其他兼容服务：联系您的服务提供商获取</p>
-              </Card>
+              <div>
+                <h4>如何配置 API Keys：</h4>
+                <ol>
+                  <li>
+                    在项目根目录创建 <code>.env.local</code> 文件（可以复制{' '}
+                    <code>.env.local.example</code>）
+                  </li>
+                  <li>填入以下环境变量：</li>
+                </ol>
+                <pre
+                  style={{
+                    background: '#f5f5f5',
+                    padding: 16,
+                    borderRadius: 4,
+                    overflow: 'auto',
+                  }}
+                >
+                  {`VITE_LLM_BASE_URL=https://api.openai.com/v1
+VITE_LLM_API_KEY=sk-your-api-key
+VITE_LLM_MODEL=gpt-4
+VITE_SUPABASE_URL=https://xxxxx.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJ...
+VITE_AMAP_API_KEY=your-amap-key`}
+                </pre>
+                <p>3. 重启开发服务器使配置生效</p>
+              </div>
 
-              <Card size="small">
-                <h4>2. Supabase</h4>
-                <p>
-                  - 访问{' '}
-                  <a href="https://supabase.com" target="_blank" rel="noopener noreferrer">
-                    https://supabase.com
-                  </a>{' '}
-                  创建项目
-                </p>
-                <p>- 在 Project Settings → API 中找到 URL 和 anon key</p>
-              </Card>
+              <Alert
+                message="安全提示"
+                description=".env.local 文件已添加到 .gitignore，不会被提交到 Git 仓库。请妥善保管您的 API Keys。"
+                type="info"
+                showIcon
+              />
 
-              <Card size="small">
-                <h4>3. 高德地图 API</h4>
-                <p>
-                  - 访问{' '}
-                  <a href="https://console.amap.com" target="_blank" rel="noopener noreferrer">
-                    https://console.amap.com
-                  </a>{' '}
-                  申请 Web 服务 API Key
-                </p>
-                <p>- 创建应用并获取 Key</p>
-              </Card>
+              <div>
+                <h4>获取 API Keys：</h4>
+                <ul>
+                  <li>
+                    <strong>LLM API (OpenAI)：</strong>
+                    <a
+                      href="https://platform.openai.com/api-keys"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      https://platform.openai.com/api-keys
+                    </a>
+                  </li>
+                  <li>
+                    <strong>Supabase：</strong>
+                    <a
+                      href="https://supabase.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      https://supabase.com
+                    </a>{' '}
+                    → Project Settings → API
+                  </li>
+                  <li>
+                    <strong>高德地图：</strong>
+                    <a
+                      href="https://console.amap.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      https://console.amap.com
+                    </a>{' '}
+                    → 应用管理 → 我的应用
+                  </li>
+                </ul>
+              </div>
             </Space>
-          </div>
+          </Card>
         </Card>
       </Content>
     </Layout>

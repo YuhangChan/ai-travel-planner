@@ -51,7 +51,6 @@
 
 ### 状态管理
 - **Zustand** - 轻量级状态管理
-- 支持本地持久化
 
 ### 后端服务
 - **Supabase** - 数据库和认证
@@ -91,12 +90,14 @@ ai-travel-planner/
 │   │   ├── Home.tsx         # 主页（计划列表）
 │   │   ├── CreatePlan.tsx   # 创建计划页
 │   │   ├── PlanDetail.tsx   # 计划详情页
-│   │   └── Settings.tsx     # 设置页（API配置）
+│   │   └── Settings.tsx     # 设置页（配置检查）
 │   ├── services/            # 服务层
 │   │   ├── supabase.ts      # Supabase 服务
 │   │   ├── llm.ts           # LLM API 服务
 │   │   ├── plan.ts          # 计划管理服务
 │   │   └── speech.ts        # 语音识别服务
+│   ├── config/              # 配置
+│   │   └── api.ts           # API 配置
 │   ├── store/               # 状态管理
 │   │   └── index.ts         # Zustand store
 │   ├── types/               # 类型定义
@@ -105,11 +106,10 @@ ai-travel-planner/
 │   ├── main.tsx             # 应用入口
 │   └── index.css            # 全局样式
 ├── index.html               # HTML 模板
+├── .env.local.example       # 环境变量示例
 ├── package.json             # 项目依赖
 ├── tsconfig.json            # TypeScript 配置
 ├── vite.config.ts           # Vite 配置
-├── tailwind.config.js       # TailwindCSS 配置
-├── SUPABASE_SETUP.md        # Supabase 配置指南
 └── README.md                # 项目说明
 ```
 
@@ -124,36 +124,40 @@ ai-travel-planner/
 ### 安装依赖
 
 ```bash
-# 使用 npm
 npm install
-
-# 或使用 yarn
-yarn install
-
-# 或使用 pnpm
-pnpm install
 ```
 
 ### 配置 API 密钥
 
-本项目需要配置以下 API 服务：
+1. **复制环境变量模板**
+   ```bash
+   cp .env.local.example .env.local
+   ```
 
-1. **Supabase**（数据库和认证）
-   - 参考 [SUPABASE_SETUP.md](./SUPABASE_SETUP.md) 创建项目和数据库
-   - 获取 Project URL 和 Anon Key
+2. **编辑 `.env.local` 文件，填入你的 API Keys**
 
-2. **LLM API**（AI 行程规划）
-   - OpenAI API: https://platform.openai.com/api-keys
-   - 或其他兼容 OpenAI 格式的 API 服务
+```env
+# LLM API 配置（OpenAI 或兼容服务）
+VITE_LLM_BASE_URL=https://api.openai.com/v1
+VITE_LLM_API_KEY=sk-your-api-key-here
+VITE_LLM_MODEL=gpt-4
 
-3. **高德地图 API**（地图服务）
-   - 访问 https://console.amap.com 申请 Web 服务 Key
-   - 在 `index.html` 中替换 `YOUR_AMAP_KEY`
+# Supabase 配置
+VITE_SUPABASE_URL=https://xxxxx.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGc...
 
-```html
-<!-- index.html -->
-<script type="text/javascript" src="https://webapi.amap.com/maps?v=2.0&key=YOUR_AMAP_KEY"></script>
+# 高德地图 API Key
+VITE_AMAP_API_KEY=your-amap-key-here
 ```
+
+3. **如何获取这些 API Keys？**
+   - **LLM API (OpenAI)**: 访问 [https://platform.openai.com/api-keys](https://platform.openai.com/api-keys)
+   - **Supabase**: 访问 [https://supabase.com](https://supabase.com) → 创建项目 → Project Settings → API
+   - **高德地图**: 访问 [https://console.amap.com](https://console.amap.com) → 应用管理 → 我的应用
+
+### 配置 Supabase 数据库
+
+参考 `SUPABASE_SETUP.md` 文档，执行 SQL 创建数据库表和安全策略。
 
 ### 启动开发服务器
 
@@ -163,30 +167,12 @@ npm run dev
 
 访问 http://localhost:3000
 
-### 首次使用配置
+### 首次使用
 
 1. 注册账号或登录
-2. 访问"设置"页面
-3. 填入以下配置：
-   - LLM Base URL（例如：`https://api.openai.com/v1`）
-   - LLM API Key
-   - Supabase URL
-   - Supabase Anon Key
-   - 高德地图 API Key
-4. 保存设置
-
-### 创建第一个旅行计划
-
-1. 点击"创建新计划"
-2. 填写基本信息：
-   - 目的地
-   - 出行日期
-   - 预算
-   - 同行人数
-3. （可选）点击"语音输入"按钮，说出您的旅行偏好
-4. 点击"生成 AI 旅行计划"
-5. 等待 AI 生成详细行程（约 10-30 秒）
-6. 查看行程详情、地图导航和费用管理
+2. 点击"创建新计划"
+3. 填写旅行信息并生成 AI 计划
+4. 在"设置"页面可以查看配置状态
 
 ## 📖 使用指南
 
@@ -221,10 +207,11 @@ npm run dev
 
 ### API Key 安全
 
-- 所有 API Key 仅存储在**浏览器本地**（localStorage）
-- **不会**上传到任何服务器
+- 所有 API Key 存储在 `.env.local` 文件中
+- `.env.local` 已添加到 `.gitignore`，**不会**提交到 Git
+- 仅在构建时打包到应用中
 - 建议定期更换 API Key
-- 不要在公共设备上保存 API Key
+- 不要在公共仓库中暴露 API Keys
 
 ### 数据安全
 
@@ -243,32 +230,26 @@ npm run build
 
 构建产物在 `dist/` 目录
 
+### 环境变量配置
+
+部署时需要配置以下环境变量：
+- `VITE_LLM_BASE_URL`
+- `VITE_LLM_API_KEY`
+- `VITE_LLM_MODEL`
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
+- `VITE_AMAP_API_KEY`
+
 ### 部署到 Vercel
 
-1. 安装 Vercel CLI：
-```bash
-npm i -g vercel
-```
-
-2. 部署：
-```bash
-vercel
-```
+1. 在 Vercel 项目设置中添加环境变量
+2. 连接 Git 仓库自动部署
 
 ### 部署到 Netlify
 
-1. 在 Netlify 中创建新站点
-2. 连接 Git 仓库
-3. 构建命令：`npm run build`
-4. 发布目录：`dist`
-
-### 部署到其他平台
-
-支持任何静态网站托管平台：
-- GitHub Pages
-- Cloudflare Pages
-- AWS S3 + CloudFront
-- 等等
+1. 在 Netlify 项目设置中添加环境变量
+2. 构建命令：`npm run build`
+3. 发布目录：`dist`
 
 ## 🤝 贡献
 
@@ -286,10 +267,6 @@ MIT License
 - [OpenAI](https://openai.com/)
 - [高德地图](https://lbs.amap.com/)
 - [Web Speech API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Speech_API)
-
-## 📞 联系方式
-
-如有问题或建议，请提交 Issue 或联系开发者。
 
 ---
 

@@ -1,17 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
+import config from '@/config/api';
 
-// 这些值将在设置页面配置
-let supabaseClient: ReturnType<typeof createClient> | null = null;
-
-export const initSupabase = (url: string, anonKey: string) => {
-  supabaseClient = createClient(url, anonKey);
-  return supabaseClient;
-};
+// 从配置文件初始化 Supabase 客户端
+const supabaseClient = createClient(config.supabase.url, config.supabase.anonKey);
 
 export const getSupabase = () => {
-  if (!supabaseClient) {
-    throw new Error('Supabase client not initialized. Please configure in settings.');
-  }
   return supabaseClient;
 };
 

@@ -1,15 +1,10 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { User, TravelPlan, ApiConfig } from '@/types';
+import { User, TravelPlan } from '@/types';
 
 interface AppState {
   // 用户状态
   user: User | null;
   setUser: (user: User | null) => void;
-
-  // API 配置
-  apiConfig: ApiConfig;
-  setApiConfig: (config: Partial<ApiConfig>) => void;
 
   // 当前选中的旅行计划
   currentPlan: TravelPlan | null;
@@ -26,63 +21,45 @@ interface AppState {
   clearAll: () => void;
 }
 
-export const useStore = create<AppState>()(
-  persist(
-    (set) => ({
-      // 初始状态
+export const useStore = create<AppState>((set) => ({
+  // 初始状态
+  user: null,
+  currentPlan: null,
+  plans: [],
+
+  // 用户操作
+  setUser: (user) => set({ user }),
+
+  // 当前计划操作
+  setCurrentPlan: (plan) => set({ currentPlan: plan }),
+
+  // 计划列表操作
+  setPlans: (plans) => set({ plans }),
+  addPlan: (plan) =>
+    set((state) => ({
+      plans: [plan, ...state.plans],
+    })),
+  updatePlan: (id, planUpdate) =>
+    set((state) => ({
+      plans: state.plans.map((p) =>
+        p.id === id ? { ...p, ...planUpdate } : p
+      ),
+      currentPlan:
+        state.currentPlan?.id === id
+          ? { ...state.currentPlan, ...planUpdate }
+          : state.currentPlan,
+    })),
+  deletePlan: (id) =>
+    set((state) => ({
+      plans: state.plans.filter((p) => p.id !== id),
+      currentPlan: state.currentPlan?.id === id ? null : state.currentPlan,
+    })),
+
+  // 清除所有数据
+  clearAll: () =>
+    set({
       user: null,
-      apiConfig: {},
       currentPlan: null,
       plans: [],
-
-      // 用户操作
-      setUser: (user) => set({ user }),
-
-      // API 配置操作
-      setApiConfig: (config) =>
-        set((state) => ({
-          apiConfig: { ...state.apiConfig, ...config },
-        })),
-
-      // 当前计划操作
-      setCurrentPlan: (plan) => set({ currentPlan: plan }),
-
-      // 计划列表操作
-      setPlans: (plans) => set({ plans }),
-      addPlan: (plan) =>
-        set((state) => ({
-          plans: [plan, ...state.plans],
-        })),
-      updatePlan: (id, planUpdate) =>
-        set((state) => ({
-          plans: state.plans.map((p) =>
-            p.id === id ? { ...p, ...planUpdate } : p
-          ),
-          currentPlan:
-            state.currentPlan?.id === id
-              ? { ...state.currentPlan, ...planUpdate }
-              : state.currentPlan,
-        })),
-      deletePlan: (id) =>
-        set((state) => ({
-          plans: state.plans.filter((p) => p.id !== id),
-          currentPlan: state.currentPlan?.id === id ? null : state.currentPlan,
-        })),
-
-      // 清除所有数据
-      clearAll: () =>
-        set({
-          user: null,
-          apiConfig: {},
-          currentPlan: null,
-          plans: [],
-        }),
     }),
-    {
-      name: 'travel-planner-storage',
-      partialize: (state) => ({
-        apiConfig: state.apiConfig,
-      }),
-    }
-  )
-);
+}));

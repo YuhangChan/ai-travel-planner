@@ -111,13 +111,6 @@ export interface Expense {
   created_at: string;
 }
 
-// API 配置
-export interface ApiConfig {
-  llm_base_url?: string;
-  llm_api_key?: string;
-  amap_api_key?: string;
-}
-
 // 语音识别结果
 export interface SpeechRecognitionResult {
   transcript: string;
