@@ -248,7 +248,7 @@ export default function MapView({ plan }: MapViewProps) {
 
   // 始终渲染地图容器，只是根据状态显示不同的遮罩层
   return (
-    <Card bodyStyle={{ padding: 0 }}>
+    <Card styles={{ body: { padding: 0 } }}>
       {/* 地图容器 - 使用相对定位以便放置遮罩层 */}
       <div
         style={{

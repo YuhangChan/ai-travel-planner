@@ -42,7 +42,7 @@ export default function StreamingDisplay({
       closable={false}
       centered
       width={700}
-      bodyStyle={{ padding: 0 }}
+      styles={{ body: { padding: 0 } }}
     >
       {/* 顶部标题栏 */}
       <div

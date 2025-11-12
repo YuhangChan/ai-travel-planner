@@ -438,7 +438,7 @@ export default function AmapDebugTool() {
       </Card>
 
       {/* 地图容器 */}
-      <Card title="📍 地图预览" bodyStyle={{ padding: 0 }}>
+      <Card title="📍 地图预览" styles={{ body: { padding: 0 } }}>
         <div
           ref={mapContainer}
           style={{
