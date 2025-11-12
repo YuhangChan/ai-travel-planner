@@ -112,6 +112,7 @@ export default function PlanDetail() {
       </Header>
 
       <Content style={{ padding: 24 }}>
+        {/* 基本信息卡片 */}
         <Card style={{ marginBottom: 16 }}>
           <Descriptions column={4}>
             <Descriptions.Item label="目的地">
@@ -140,6 +141,12 @@ export default function PlanDetail() {
           )}
         </Card>
 
+        {/* 地图导航 - 独立显示 */}
+        <div style={{ marginBottom: 16 }}>
+          <MapView plan={plan} />
+        </div>
+
+        {/* 详细信息Tabs */}
         <Tabs defaultActiveKey="itinerary">
           <TabPane tab="行程安排" key="itinerary">
             {plan.itinerary ? (
@@ -209,10 +216,6 @@ export default function PlanDetail() {
             ) : (
               <Empty description="暂无行程安排" />
             )}
-          </TabPane>
-
-          <TabPane tab="地图导航" key="map">
-            <MapView plan={plan} />
           </TabPane>
 
           <TabPane tab="费用管理" key="expenses">
