@@ -1,5 +1,7 @@
 // API 配置文件
-// 所有 API Keys 从环境变量中读取
+// 所有 API Keys 优先从 localStorage 读取，其次从环境变量读取
+
+import { getCurrentConfig } from '@/services/configManager';
 
 export interface ApiConfig {
   llm: {
@@ -17,39 +19,7 @@ export interface ApiConfig {
   };
 }
 
-// 从环境变量读取配置
-const config: ApiConfig = {
-  llm: {
-    baseURL: import.meta.env.VITE_LLM_BASE_URL || '',
-    apiKey: import.meta.env.VITE_LLM_API_KEY || '',
-    model: import.meta.env.VITE_LLM_MODEL || 'gpt-4',
-  },
-  supabase: {
-    url: import.meta.env.VITE_SUPABASE_URL || '',
-    anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || '',
-  },
-  amap: {
-    apiKey: import.meta.env.VITE_AMAP_API_KEY || '',
-    securityCode: import.meta.env.VITE_AMAP_SECURITY_CODE || '',
-  },
-};
-
-// 验证配置是否完整
-export const validateConfig = (): { valid: boolean; missing: string[] } => {
-  const missing: string[] = [];
-
-  if (!config.llm.baseURL) missing.push('VITE_LLM_BASE_URL');
-  if (!config.llm.apiKey) missing.push('VITE_LLM_API_KEY');
-  if (!config.llm.model) missing.push('VITE_LLM_MODEL');
-  if (!config.supabase.url) missing.push('VITE_SUPABASE_URL');
-  if (!config.supabase.anonKey) missing.push('VITE_SUPABASE_ANON_KEY');
-  if (!config.amap.apiKey) missing.push('VITE_AMAP_API_KEY');
-  if (!config.amap.securityCode) missing.push('VITE_AMAP_SECURITY_CODE');
-
-  return {
-    valid: missing.length === 0,
-    missing,
-  };
-};
+// 获取当前有效配置
+const config: ApiConfig = getCurrentConfig();
 
 export default config;
