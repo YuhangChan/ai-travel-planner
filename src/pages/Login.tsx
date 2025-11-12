@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Form, Input, Button, Card, message, Tabs } from 'antd';
-import { UserOutlined, LockOutlined, MailOutlined } from '@ant-design/icons';
+import { LockOutlined, MailOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '@/services/supabase';
 import { useStore } from '@/store';

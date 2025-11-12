@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Modal, Button, Space, Typography, Progress } from 'antd';
-import { AudioOutlined, CloseOutlined } from '@ant-design/icons';
+import { Modal, Button, Space, Typography } from 'antd';
+import { AudioOutlined } from '@ant-design/icons';
 import { createSpeechRecognition } from '@/services/speech';
-import { SpeechRecognitionResult } from '@/types';
+import { SpeechRecognitionResult as SpeechResult } from '@/types';
 
 const { Text } = Typography;
 
@@ -46,7 +46,7 @@ export default function VoiceInput({ onResult, onClose }: VoiceInputProps) {
 
     recognition.start(
       // 最终结果回调
-      (result: SpeechRecognitionResult) => {
+      (result: SpeechResult) => {
         setFinalTranscript(prev => prev + result.transcript);
         setInterimTranscript(''); // 清空临时文本
       },

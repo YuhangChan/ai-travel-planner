@@ -5,7 +5,6 @@ import {
   SettingOutlined,
   LogoutOutlined,
   CalendarOutlined,
-  EnvironmentOutlined,
   TeamOutlined,
   DollarOutlined,
   DeleteOutlined,

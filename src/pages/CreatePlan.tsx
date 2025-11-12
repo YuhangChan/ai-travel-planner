@@ -21,7 +21,7 @@ import { llmService } from '@/services/llm';
 import { planService } from '@/services/plan';
 import VoiceInput from '@/components/VoiceInput';
 import StreamingDisplay from '@/components/StreamingDisplay';
-import dayjs, { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
 
 const { Header, Content } = Layout;
 const { RangePicker } = DatePicker;

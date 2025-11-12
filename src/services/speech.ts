@@ -1,4 +1,4 @@
-import { SpeechRecognitionResult } from '@/types';
+import type { SpeechRecognitionResult } from '@/types';
 
 // Web Speech API 类型定义
 interface SpeechRecognitionEvent extends Event {
@@ -8,11 +8,11 @@ interface SpeechRecognitionEvent extends Event {
 
 interface SpeechRecognitionResultList {
   length: number;
-  item(index: number): SpeechRecognitionResult;
-  [index: number]: SpeechRecognitionResult;
+  item(index: number): WebSpeechRecognitionResult;
+  [index: number]: WebSpeechRecognitionResult;
 }
 
-interface SpeechRecognitionResult {
+interface WebSpeechRecognitionResult {
   length: number;
   item(index: number): SpeechRecognitionAlternative;
   [index: number]: SpeechRecognitionAlternative;

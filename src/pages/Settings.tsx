@@ -19,7 +19,7 @@ import { useNavigate } from 'react-router-dom';
 import { getCurrentConfig, validateConfig } from '@/services/configManager';
 
 const { Header, Content } = Layout;
-const { Paragraph, Text } = Typography;
+const { Text } = Typography;
 
 export default function Settings() {
   const navigate = useNavigate();
