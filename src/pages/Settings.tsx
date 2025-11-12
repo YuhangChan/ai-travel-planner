@@ -16,40 +16,50 @@ import {
   WarningOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import config, { validateConfig } from '@/config/api';
+import { getCurrentConfig, validateConfig } from '@/services/configManager';
 
 const { Header, Content } = Layout;
 const { Paragraph, Text } = Typography;
 
 export default function Settings() {
   const navigate = useNavigate();
+  const [config, setConfig] = useState<any>(null);
   const [configStatus, setConfigStatus] = useState<{
     valid: boolean;
     missing: string[];
   }>({ valid: true, missing: [] });
 
   useEffect(() => {
-    const status = validateConfig();
+    const currentConfig = getCurrentConfig();
+    setConfig(currentConfig);
+    const status = validateConfig(currentConfig);
     setConfigStatus(status);
   }, []);
 
-  const getStatusIcon = (key: string) => {
-    const isMissing = configStatus.missing.includes(key);
-    return isMissing ? (
-      <CloseCircleOutlined style={{ color: '#ff4d4f' }} />
-    ) : (
+  // 检查特定配置项是否存在
+  const isConfigured = (value: string | undefined) => {
+    return value && value.trim() !== '';
+  };
+
+  const getStatusIcon = (value: string | undefined) => {
+    return isConfigured(value) ? (
       <CheckCircleOutlined style={{ color: '#52c41a' }} />
+    ) : (
+      <CloseCircleOutlined style={{ color: '#ff4d4f' }} />
     );
   };
 
-  const getStatusTag = (key: string) => {
-    const isMissing = configStatus.missing.includes(key);
-    return isMissing ? (
-      <Tag color="error">未配置</Tag>
-    ) : (
+  const getStatusTag = (value: string | undefined) => {
+    return isConfigured(value) ? (
       <Tag color="success">已配置</Tag>
+    ) : (
+      <Tag color="error">未配置</Tag>
     );
   };
+
+  if (!config) {
+    return null;
+  }
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
@@ -79,14 +89,15 @@ export default function Settings() {
               message="配置不完整"
               description={
                 <div>
-                  <p>以下环境变量未配置，请在 .env.local 文件中添加：</p>
+                  <p>以下配置项缺失或为空：</p>
                   <ul>
                     {configStatus.missing.map((key) => (
-                      <li key={key}>
-                        <code>{key}</code>
-                      </li>
+                      <li key={key}>{key}</li>
                     ))}
                   </ul>
+                  <p style={{ marginTop: 16 }}>
+                    请访问 <a href="/config">/config</a> 页面填写缺失的配置项，或在项目根目录的 .env.local 文件中添加相应的环境变量。
+                  </p>
                 </div>
               }
               type="error"
@@ -115,12 +126,12 @@ export default function Settings() {
             <Descriptions.Item
               label={
                 <span>
-                  {getStatusIcon('VITE_LLM_BASE_URL')} LLM Base URL
+                  {getStatusIcon(config.llm.baseURL)} LLM Base URL
                 </span>
               }
             >
               <Space>
-                {getStatusTag('VITE_LLM_BASE_URL')}
+                {getStatusTag(config.llm.baseURL)}
                 {config.llm.baseURL && (
                   <Text type="secondary">{config.llm.baseURL}</Text>
                 )}
@@ -130,12 +141,12 @@ export default function Settings() {
             <Descriptions.Item
               label={
                 <span>
-                  {getStatusIcon('VITE_LLM_API_KEY')} LLM API Key
+                  {getStatusIcon(config.llm.apiKey)} LLM API Key
                 </span>
               }
             >
               <Space>
-                {getStatusTag('VITE_LLM_API_KEY')}
+                {getStatusTag(config.llm.apiKey)}
                 {config.llm.apiKey && (
                   <Text type="secondary">
                     {config.llm.apiKey.substring(0, 8)}...
@@ -147,12 +158,12 @@ export default function Settings() {
             <Descriptions.Item
               label={
                 <span>
-                  {getStatusIcon('VITE_LLM_MODEL')} LLM Model
+                  {getStatusIcon(config.llm.model)} LLM Model
                 </span>
               }
             >
               <Space>
-                {getStatusTag('VITE_LLM_MODEL')}
+                {getStatusTag(config.llm.model)}
                 {config.llm.model && (
                   <Text type="secondary">{config.llm.model}</Text>
                 )}
@@ -162,12 +173,12 @@ export default function Settings() {
             <Descriptions.Item
               label={
                 <span>
-                  {getStatusIcon('VITE_SUPABASE_URL')} Supabase URL
+                  {getStatusIcon(config.supabase.url)} Supabase URL
                 </span>
               }
             >
               <Space>
-                {getStatusTag('VITE_SUPABASE_URL')}
+                {getStatusTag(config.supabase.url)}
                 {config.supabase.url && (
                   <Text type="secondary">{config.supabase.url}</Text>
                 )}
@@ -177,12 +188,12 @@ export default function Settings() {
             <Descriptions.Item
               label={
                 <span>
-                  {getStatusIcon('VITE_SUPABASE_ANON_KEY')} Supabase Anon Key
+                  {getStatusIcon(config.supabase.anonKey)} Supabase Anon Key
                 </span>
               }
             >
               <Space>
-                {getStatusTag('VITE_SUPABASE_ANON_KEY')}
+                {getStatusTag(config.supabase.anonKey)}
                 {config.supabase.anonKey && (
                   <Text type="secondary">
                     {config.supabase.anonKey.substring(0, 12)}...
@@ -194,12 +205,12 @@ export default function Settings() {
             <Descriptions.Item
               label={
                 <span>
-                  {getStatusIcon('VITE_AMAP_API_KEY')} 高德地图 API Key
+                  {getStatusIcon(config.amap.apiKey)} 高德地图 API Key
                 </span>
               }
             >
               <Space>
-                {getStatusTag('VITE_AMAP_API_KEY')}
+                {getStatusTag(config.amap.apiKey)}
                 {config.amap.apiKey && (
                   <Text type="secondary">
                     {config.amap.apiKey.substring(0, 8)}...
@@ -211,12 +222,12 @@ export default function Settings() {
             <Descriptions.Item
               label={
                 <span>
-                  {getStatusIcon('VITE_AMAP_SECURITY_CODE')} 高德地图安全密钥
+                  {getStatusIcon(config.amap.securityCode)} 高德地图安全密钥
                 </span>
               }
             >
               <Space>
-                {getStatusTag('VITE_AMAP_SECURITY_CODE')}
+                {getStatusTag(config.amap.securityCode)}
                 {config.amap.securityCode && (
                   <Text type="secondary">
                     {config.amap.securityCode.substring(0, 8)}...
