@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  ai-travel-planner:
+    # 使用本地构建的镜像
+    # build: .
+
+    # 或使用阿里云镜像仓库的镜像（替换为您的实际地址）
+    image: registry.cn-hangzhou.aliyuncs.com/your-namespace/ai-travel-planner:latest
+
+    container_name: ai-travel-planner
+
+    ports:
+      - "80:80"    # HTTP 端口
+      # - "443:443"  # HTTPS 端口（如果配置了 SSL）
+
+    restart: unless-stopped
+
+    # 环境变量配置（可选）
+    # 用户可以通过配置页面输入这些值，这里只是提供默认值
+    environment:
+      # LLM 配置
+      # - VITE_LLM_BASE_URL=https://api.openai.com/v1
+      # - VITE_LLM_API_KEY=sk-your-api-key
+      # - VITE_LLM_MODEL=gpt-4
+
+      # Supabase 配置
+      # - VITE_SUPABASE_URL=https://xxxxx.supabase.co
+      # - VITE_SUPABASE_ANON_KEY=eyJhbGc...
+
+      # 高德地图配置
+      # - VITE_AMAP_API_KEY=your-amap-api-key
+      # - VITE_AMAP_SECURITY_CODE=your-security-code
+
+      # 时区设置
+      - TZ=Asia/Shanghai
+
+    # 健康检查
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 3s
+      start_period: 5s
+      retries: 3
+
+    # 资源限制（可选）
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: '1'
+    #       memory: 512M
+    #     reservations:
+    #       cpus: '0.5'
+    #       memory: 256M
+
+    # 挂载卷（如果需要持久化日志）
+    # volumes:
+    #   - ./logs:/var/log/nginx
+
+# 网络配置（如果需要与其他服务通信）
+# networks:
+#   default:
+#     name: travel-planner-network
