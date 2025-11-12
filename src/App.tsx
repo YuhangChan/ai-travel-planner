@@ -11,6 +11,7 @@ import ConfigSetup from './pages/ConfigSetup';
 import { useStore } from './store';
 import { authService } from './services/supabase';
 import { isConfigComplete } from './services/configManager';
+import { loadAmapScript } from './services/amapLoader';
 
 function App() {
   const { user, setUser } = useStore();
@@ -26,7 +27,16 @@ function App() {
       return complete;
     };
 
-    // 步骤2: 检查用户登录状态
+    // 步骤2: 加载高德地图 SDK
+    const loadAmap = async () => {
+      try {
+        await loadAmapScript();
+      } catch (error) {
+        console.error('高德地图加载失败:', error);
+      }
+    };
+
+    // 步骤3: 检查用户登录状态
     const checkAuth = async () => {
       try {
         const currentUser = await authService.getUser();
@@ -50,6 +60,9 @@ function App() {
       setLoading(false);
       return;
     }
+
+    // 加载高德地图（异步，不阻塞）
+    loadAmap();
 
     try {
       checkAuth();

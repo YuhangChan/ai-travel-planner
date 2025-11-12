@@ -9,18 +9,7 @@
   <body>
     <div id="root"></div>
 
-    <!-- 高德地图安全密钥配置 -->
-    <script>
-      window._AMapSecurityConfig = {
-        securityJsCode: '%VITE_AMAP_SECURITY_CODE%',
-      };
-    </script>
-
-    <!-- 高德地图 JS API 2.0 -->
-    <script
-      type="text/javascript"
-      src="https://webapi.amap.com/maps?v=2.0&key=%VITE_AMAP_API_KEY%&plugin=AMap.ToolBar,AMap.Driving,AMap.Walking,AMap.Transfer,AMap.PlaceSearch,AMap.AutoComplete,AMap.Geocoder"
-    ></script>
+    <!-- 高德地图将在运行时动态加载，以使用正确的配置 -->
 
     <script type="module" src="/src/main.tsx"></script>
   </body>
