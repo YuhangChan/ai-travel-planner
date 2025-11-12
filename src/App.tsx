@@ -6,6 +6,7 @@ import Home from './pages/Home';
 import CreatePlan from './pages/CreatePlan';
 import PlanDetail from './pages/PlanDetail';
 import Settings from './pages/Settings';
+import AmapDebug from './pages/AmapDebug';
 import { useStore } from './store';
 import { authService } from './services/supabase';
 
@@ -90,6 +91,11 @@ function App() {
       <Route
         path="/settings"
         element={user ? <Settings /> : <Navigate to="/login" replace />}
+      />
+      {/* 调试工具页面 - 无需登录 */}
+      <Route
+        path="/debug"
+        element={<AmapDebug />}
       />
     </Routes>
   );
