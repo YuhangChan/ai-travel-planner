@@ -26,6 +26,62 @@ export class LLMService {
     this.model = model;
   }
 
+  /**
+   * 智能解析JSON，支持处理Markdown代码块包裹的JSON
+   * 支持的格式：
+   * 1. 直接的JSON字符串
+   * 2. ```json\n{...}\n```
+   * 3. ```\n{...}\n```
+   * 其中```和json之间可能有空白符
+   */
+  private parseJSONResponse(text: string): any {
+    // 去除首尾空白
+    const trimmed = text.trim();
+
+    // 尝试直接解析
+    try {
+      return JSON.parse(trimmed);
+    } catch (directError) {
+      console.log('直接JSON解析失败，尝试提取Markdown代码块...');
+    }
+
+    // 匹配Markdown代码块: ```可能的空白符可能的语言标识\n内容\n```
+    // 支持: ```json\n...\n``` 或 ``` json\n...\n``` 或 ```\n...\n```
+    const codeBlockRegex = /```\s*(?:json)?\s*\n([\s\S]*?)\n```/i;
+    const match = trimmed.match(codeBlockRegex);
+
+    if (match && match[1]) {
+      const extractedContent = match[1].trim();
+      console.log('提取到Markdown代码块内容');
+
+      try {
+        return JSON.parse(extractedContent);
+      } catch (extractError) {
+        console.error('提取的内容仍无法解析为JSON:', extractedContent);
+        throw new Error('LLM返回的内容格式错误，无法解析为有效的JSON');
+      }
+    }
+
+    // 如果没有匹配到代码块，尝试查找第一个{到最后一个}
+    const firstBrace = trimmed.indexOf('{');
+    const lastBrace = trimmed.lastIndexOf('}');
+
+    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+      const extracted = trimmed.substring(firstBrace, lastBrace + 1);
+      console.log('尝试提取{}之间的内容');
+
+      try {
+        return JSON.parse(extracted);
+      } catch (braceError) {
+        console.error('{}之间的内容无法解析:', extracted);
+      }
+    }
+
+    // 所有尝试都失败
+    console.error('无法解析的原始文本:', trimmed);
+    throw new Error('LLM返回的内容格式错误，无法解析为有效的JSON');
+  }
+
   async generateTravelPlan(params: GeneratePlanParams): Promise<LLMResponse> {
     const prompt = this.buildPrompt(params);
 
@@ -56,7 +112,7 @@ export class LLMService {
       );
 
       const content = response.data.choices[0].message.content;
-      return JSON.parse(content);
+      return this.parseJSONResponse(content);
     } catch (error) {
       console.error('LLM API Error:', error);
       throw new Error('生成旅行计划失败，请检查API配置');
@@ -123,11 +179,11 @@ export class LLMService {
             if (data === '[DONE]') {
               // 流式输出完成，解析完整的JSON
               try {
-                const parsed = JSON.parse(fullText);
+                const parsed = this.parseJSONResponse(fullText);
                 onComplete(parsed);
               } catch (parseError) {
                 console.error('JSON解析失败:', fullText);
-                onError('生成的内容格式错误');
+                onError('生成的内容格式错误，请检查LLM输出');
               }
               return;
             }
@@ -205,7 +261,7 @@ export class LLMService {
       );
 
       const content = response.data.choices[0].message.content;
-      return JSON.parse(content);
+      return this.parseJSONResponse(content);
     } catch (error) {
       console.error('Budget Analysis Error:', error);
       throw new Error('预算分析失败，请检查API配置');
